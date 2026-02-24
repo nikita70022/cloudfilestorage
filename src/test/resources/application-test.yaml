@@ -1,0 +1,11 @@
+spring:
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      properties:
+        hibernate:
+          show_sql: true
+          default_schema: auth.users
