@@ -12,12 +12,6 @@ import java.util.*;
 @Configuration
 @EnableRedisHttpSession
 public class ApplicationConfig {
-    @Value("${spring.minio.endpoint}")
-    private String URL;
-    @Value("${spring.minio.access-key}")
-    private String ACCESS_KEY;
-    @Value ("${spring.minio.secret-key}")
-    private String SECRET_KEY;
 
     @Bean
     public ModelMapper modelMapper() {
@@ -25,10 +19,10 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public MinioClient minioClient() {
+    public MinioClient minioClient(MinioProperties props) {
         return MinioClient.builder()
-                .endpoint(Objects.requireNonNull(URL))
-                .credentials(ACCESS_KEY, SECRET_KEY)
+                .endpoint(props.getEndpoint())
+                .credentials(props.getAccessKey(), props.getSecretKey())
                 .build();
     }
 

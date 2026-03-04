@@ -39,8 +39,8 @@ import static org.springframework.http.HttpMethod.OPTIONS;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-    @Value("${spring.url.NGINX_URL}")
-    private String NGINX_URL;
+    @Value("${app.url}")
+    private String nginx;
 
     private final UserRepository userRepository;
 
@@ -132,7 +132,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         var config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(NGINX_URL));
+        config.setAllowedOrigins(List.of(nginx));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of(HttpHeaders.CONTENT_TYPE, HttpHeaders.ACCEPT,
                 HttpHeaders.CONTENT_DISPOSITION, "X-Requested-With", HttpHeaders.AUTHORIZATION));
