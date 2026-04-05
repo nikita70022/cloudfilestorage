@@ -1,4 +1,4 @@
-FROM nginx:1.28-alpine-slim
+FROM nginx:1.28-alpine
 
 #RUN rm -f /etc/nginx/conf.d/default.conf
 RUN rm -rf /usr/share/nginx/html/*

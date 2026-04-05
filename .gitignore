@@ -33,9 +33,12 @@ build/
 .vscode/
 
 ### PROJECT ###
-.env.docker
-.env.local
 .env
+.env.remote
+.env.local
+secrets.env
+secrets.env
 target
 postgres-data
 
+/src/main/java/com/gigabiba/cloudfilestorage/note

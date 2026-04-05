@@ -1,29 +1,13 @@
 package com.gigabiba.cloudfilestorage.config;
 
-import io.minio.*;
-import org.modelmapper.*;
-import org.springframework.beans.factory.annotation.*;
+import com.gigabiba.cloudfilestorage.config.properties.FrontendProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
-
-import java.util.*;
 
 
 @Configuration
 @EnableRedisHttpSession
+@EnableConfigurationProperties(FrontendProperties.class)
 public class ApplicationConfig {
-
-    @Bean
-    public ModelMapper modelMapper() {
-        return new ModelMapper();
-    }
-
-    @Bean
-    public MinioClient minioClient(MinioProperties props) {
-        return MinioClient.builder()
-                .endpoint(props.getEndpoint())
-                .credentials(props.getAccessKey(), props.getSecretKey())
-                .build();
-    }
-
 }

@@ -1,189 +1,261 @@
 package com.gigabiba.cloudfilestorage.controllers;
 
+import com.gigabiba.cloudfilestorage.config.ConfigTest;
+import io.minio.*;
+import io.minio.messages.Item;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.*;
 import org.springframework.boot.test.web.server.*;
-
+import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.*;
 import org.springframework.test.context.*;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlConfig;
 
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.*;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_METHOD;
+import static org.springframework.test.context.jdbc.SqlConfig.TransactionMode.ISOLATED;
 
-@SpringBootTest(webEnvironment = RANDOM_PORT)
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(ConfigTest.class)
 @ActiveProfiles("test")
-class AuthControllerIntegrationTest {
+public class AuthControllerIntegrationTest {
+
+    @Autowired
+    private MinioClient minio;
 
     @LocalServerPort
     int port;
 
+
+
     @BeforeEach
-    void set_up() {
+    void setup() throws Exception {
         baseURI = "http://localhost:" + port;
+
+        boolean exists = minio.bucketExists(
+                BucketExistsArgs.builder()
+                        .bucket("user-files")
+                        .build());
+        if (!exists) {
+            minio.makeBucket(
+                    MakeBucketArgs.builder()
+                            .bucket("user-files")
+                            .build());
+        }
     }
+
+    @AfterEach
+    void clean() throws Exception {
+
+        Iterable<Result<Item>> results = minio.listObjects(
+                ListObjectsArgs.builder()
+                        .bucket("user-files")
+                        .recursive(true)
+                        .build()
+        );
+
+        for (Result<Item> result : results) {
+            Item item = result.get();
+
+            minio.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket("user-files")
+                            .object(item.objectName())
+                            .build()
+            );
+        }
+    }
+
 
     @Test
     @DisplayName("registration successful")
-    @Sql("/data/clear_db.sql")
     @WithAnonymousUser
-    void should_return_201_from_registration_endpoint() {
-            given()
-                .contentType(ContentType.JSON)
-                .log().all()
-                .redirects().follow(false)
-                .body("""
-                        {
-                          "username": "test123",
-                          "password": "Test123!"
-                        }
-                        """)
-            .when()
-                .post("/api/auth/sign-up")
-            .then()
-                .statusCode(201)
-                .contentType(ContentType.JSON)
-                .cookie("SESSION", notNullValue())
-                .assertThat()
-                .body("username", is("test123"));
+    @Sql(scripts = "/data/postgres/clear_db.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    @Sql(scripts = "/data/postgres/init_db.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    void should_return_201_when_registration_successful() {
+                given()
+                    .contentType(ContentType.JSON)
+                    .log().all()
+                    .redirects().follow(false)
+                    .body("""
+                          {
+                            "username": "user1",
+                            "password": "User123!"
+                          }
+                          """)
+                .when()
+                    .post("/api/auth/sign-up")
+                .then()
+                    .statusCode(201)
+                    .contentType(ContentType.JSON)
+                    .cookie("SESSION", notNullValue())
+                    .assertThat()
+                    .body("username", is("user1"));
     }
 
     @Test
     @DisplayName("registration valid exception")
-    @Sql("/data/clear_db.sql")
     @WithAnonymousUser
-    void should_return_400_from_registration_endpoint() {
-            given()
-                .log().all()
-                .redirects().follow(false)
-                .contentType(ContentType.JSON)
-                .body("""
-                          {
-                            "username": "t",
-                            "password": "Test123!"
-                          }
-                        """)
-            .when()
-                .contentType(ContentType.JSON)
-                .post("/api/auth/sign-up")
-            .then()
-                .statusCode(400);
+    @Sql(scripts = "/data/postgres/clear_db.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    @Sql(scripts = "/data/postgres/init_db.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    void should_return_400_when_invalid_username_or_password_for_registration() {
+                given()
+                    .log().all()
+                    .redirects().follow(false)
+                    .contentType(ContentType.JSON)
+                    .body("""
+                            {
+                              "username": "u",
+                              "password": "User123!"
+                            }
+                          """)
+                .when()
+                    .contentType(ContentType.JSON)
+                    .post("/api/auth/sign-up")
+                .then()
+                    .statusCode(400);
     }
 
     @Test
     @DisplayName("registration conflict")
-    @Sql("/data/clear_db.sql")
-    @Sql("/data/init_data.sql")
     @WithAnonymousUser
-    void should_return_409_from_registration_endpoint() {
-            given()
-                .log().all()
-                .redirects().follow(false)
-                .contentType(ContentType.JSON)
-                .body("""
-                        {
-                          "username": "user1",
-                          "password": "User123!"
-                        }
-                        """)
-            .when()
-                .post("/api/auth/sign-up")
-            .then()
-                .statusCode(409);
+    @Sql(scripts = "/data/postgres/clear_db.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    @Sql(scripts = "/data/postgres/init_db.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    @Sql(scripts = "/data/postgres/insert_data.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    void should_return_409_when_user_already_exist() {
+                given()
+                    .log().all()
+                    .redirects().follow(false)
+                    .contentType(ContentType.JSON)
+                    .body("""
+                          {
+                            "username": "user1",
+                            "password": "User123!"
+                          }
+                          """)
+                .when()
+                    .post("/api/auth/sign-up")
+                .then()
+                    .statusCode(409);
     }
 
     @Test
     @DisplayName("login successful")
-    @Sql("/data/clear_db.sql")
-    @Sql("/data/init_data.sql")
     @WithAnonymousUser
-    void should_return_200_from_login_endpoint() {
-            given()
-                .log().all()
-                .redirects().follow(false)
-                .contentType(ContentType.JSON)
-                .body("""
-                        {
-                          "username": "user1",
-                          "password": "User123!"
-                        }
-                        """)
-            .when()
-                .post("/api/auth/sign-in")
-            .then()
-                .statusCode(200)
-                .assertThat()
-                .body("username", is("user1"));
+    @Sql(scripts = "/data/postgres/clear_db.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    @Sql(scripts = "/data/postgres/init_db.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    @Sql(scripts = "/data/postgres/insert_data.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    void should_return_200_when_login_successful() {
+                given()
+                    .log().all()
+                    .redirects().follow(false)
+                    .contentType(ContentType.JSON)
+                    .body("""
+                          {
+                            "username": "user1",
+                            "password": "User123!"
+                          }
+                          """)
+                .when()
+                    .post("/api/auth/sign-in")
+                .then()
+                    .statusCode(200)
+                    .assertThat()
+                    .body("username", is("user1"));
     }
 
     @Test
-    @DisplayName("login incorrect username of password")
-    @Sql("/data/clear_db.sql")
+    @DisplayName("login incorrect username or password")
     @WithAnonymousUser
-    void should_return_401_from_login_endpoint() {
-            given()
-                .log().all()
-                .redirects().follow(false)
-                .contentType(ContentType.JSON)
-                .body("""
-                        {
-                          "username": "user1",
-                          "password": "User123!"
-                        }
-                        """)
-            .when()
-                .post("/api/auth/sign-in")
-            .then()
-                .statusCode(401);
+    @Sql(scripts = "/data/postgres/clear_db.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    @Sql(scripts = "/data/postgres/init_db.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    @Sql(scripts = "/data/postgres/insert_data.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    void should_return_401_when_invalid_username_or_password_for_login() {
+                given()
+                    .log().all()
+                    .redirects().follow(false)
+                    .contentType(ContentType.JSON)
+                    .body("""
+                          {
+                            "username": "user12",
+                            "password": "User1234!"
+                          }
+                          """)
+                .when()
+                    .post("/api/auth/sign-in")
+                .then()
+                    .statusCode(401);
     }
 
     @Test
     @DisplayName("logout successful")
-    @Sql("/data/clear_db.sql")
-    @Sql("/data/init_data.sql")
-    void should_return_204_from_logout_endpoint() {
-            Response response = given()
-                .log().all()
-                .redirects().follow(false)
-                .contentType(ContentType.JSON)
-                .body("""
-                        {
-                          "username": "user1",
-                          "password": "User123!"
-                        }
-                        """)
-            .when()
-                .post("/api/auth/sign-in")
-            .then()
-                .statusCode(200).extract().response();
+    @Sql(scripts = "/data/postgres/clear_db.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    @Sql(scripts = "/data/postgres/init_db.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    @Sql(scripts = "/data/postgres/insert_data.sql",
+            executionPhase = BEFORE_TEST_METHOD, config = @SqlConfig(transactionMode = ISOLATED))
+    void should_return_204_when_was_login() {
+        Response response =
+                given()
+                    .log().all()
+                    .redirects().follow(false)
+                    .contentType(ContentType.JSON)
+                    .body("""
+                          {
+                            "username": "user1",
+                            "password": "User123!"
+                          }
+                          """)
+                .when()
+                    .post("/api/auth/sign-in")
+                .then()
+                    .statusCode(200).extract().response();
 
-            String session = response.getCookie("SESSION");
+        String session = response.getCookie("SESSION");
 
-            given()
-                .log().all()
-                .redirects().follow(false)
-                .cookie("SESSION", session)
-            .when()
-                .post("/api/auth/sign-out")
-            .then()
-                .statusCode(204);
+                given()
+                    .log().all()
+                    .redirects().follow(false)
+                    .cookie("SESSION", session)
+                .when()
+                    .post("/api/auth/sign-out")
+                .then()
+                    .statusCode(204);
     }
 
     @Test
     @DisplayName("logout unauthorized user")
-    @Sql("/data/clear_db.sql")
     @WithAnonymousUser
-    void should_return_401_from_logout_endpoint() {
-            given()
-                .log().all()
-                .redirects().follow(false)
-            .when()
-                .post("/api/auth/sign-out")
-            .then()
-                .statusCode(401);
+    void should_return_401_when_unauthorized() {
+                given()
+                    .log().all()
+                    .redirects().follow(false)
+                .when()
+                    .post("/api/auth/sign-out")
+                .then()
+                    .statusCode(401);
     }
 }
