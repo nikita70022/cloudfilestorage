@@ -7,7 +7,7 @@ import java.util.regex.*;
 public class S3Valid {
 
     private static final Pattern BASE_PATTERN_FOR_NAME =
-            Pattern.compile("^(?!/)(?!.*//)(?!.*\\\\)[A-Za-z0-9._\\-/]{1,255}$");
+            Pattern.compile("^(?!/)(?!.*//)(?!.*\\\\)[A-Za-z0-9._\\-/ ]{1,255}$");
 
 
     private static final Pattern BASE_PATTERN_FOR_PATH =
