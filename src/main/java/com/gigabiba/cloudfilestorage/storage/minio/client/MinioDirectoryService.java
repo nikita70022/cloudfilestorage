@@ -185,7 +185,7 @@ class MinioDirectoryService {
                         ListObjectsArgs.builder()
                                 .bucket(bucketName)
                                 .prefix(userDirectory + "/" + path)
-                                .recursive(false)
+                                .recursive(true)
                                 .build());
         try {
             List<DeleteObject> toDelete = new ArrayList<>();
