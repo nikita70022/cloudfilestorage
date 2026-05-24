@@ -10,4 +10,5 @@ import org.springframework.validation.annotation.Validated;
 public record MinioProperties(
         @NotBlank String endpoint,
         @NotBlank String bucketName
-) {}
+) {
+}

@@ -1,13 +1,16 @@
-package com.gigabiba.cloudfilestorage.storage.minio.client;
+package com.gigabiba.cloudfilestorage.storage.minio.impl;
 
+import com.gigabiba.cloudfilestorage.exception.storage.StorageException;
 import com.gigabiba.cloudfilestorage.storage.minio.properties.MinioProperties;
-import com.gigabiba.cloudfilestorage.storage.model.*;
+import com.gigabiba.cloudfilestorage.storage.dto.*;
 import com.gigabiba.cloudfilestorage.storage.service.StorageService;
 import com.gigabiba.cloudfilestorage.storage.util.path.PathUtil;
 import com.gigabiba.cloudfilestorage.storage.util.validation.S3Valid;
-import com.gigabiba.cloudfilestorage.exception.storage.StorageException;
-import io.minio.*;
+import io.minio.ListObjectsArgs;
+import io.minio.MinioClient;
+import io.minio.Result;
 import io.minio.messages.Item;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,24 +22,12 @@ import java.util.Objects;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class MinioStorageServiceImpl implements StorageService {
 
-    private final String bucketName;
-
-    private final MinioClient minioClient;
     private final MinioFileService fileService;
     private final MinioDirectoryService directoryService;
 
-
-    public MinioStorageServiceImpl(MinioProperties props,
-                                   MinioClient minioClient,
-                                   MinioFileService fileService,
-                                   MinioDirectoryService directoryService) {
-        this.bucketName = props.bucketName();
-        this.minioClient = minioClient;
-        this.fileService = fileService;
-        this.directoryService = directoryService;
-    }
 
     public ObjectResponseDto getFileInfo(Long id, String path) {
 
@@ -92,43 +83,15 @@ public class MinioStorageServiceImpl implements StorageService {
 
     public List<ObjectResponseDto> searchObjects(Long id, String name) {
 
-        S3Valid.fileNameIsValid(name);
-
         String userDirectory = String.format("user-%s-files", id);
 
-        List<ObjectResponseDto> info = new ArrayList<>();
+        log.info("Search object in storage. userDirectory={}, path={}", userDirectory, name);
 
-        Iterable<Result<Item>> results = minioClient.listObjects(
-                ListObjectsArgs.builder()
-                        .bucket(bucketName)
-                        .prefix(userDirectory + "/" + name)
-                        .recursive(true)
-                        .build()
-        );
+        S3Valid.fileNameIsValid(name);
 
-        try {
-            for (Result<Item> result : results) {
-                Item item = result.get();
+        List<ObjectResponseDto> info = fileService.searchObjects(userDirectory, name);
 
-                if (MinioDirectoryService.isDirectory(item.objectName())) {
-                    info.add(new DirectoryResponseDto(
-                            PathUtil.getParentPath(PathUtil.stripUserDirectory(userDirectory,item.objectName())),
-                            PathUtil.getName(PathUtil.stripUserDirectory(userDirectory,item.objectName())),
-                            Type.DIRECTORY));
-                    continue;
-                }
-
-                info.add(new FileResponseDto(
-                        PathUtil.getParentPath(item.objectName()),
-                        PathUtil.getName(item.objectName()),
-                        item.size(),
-                        Type.FILE));
-            }
-
-        } catch (Exception e) {
-
-            throw new StorageException("Failed to search objects", e);
-        }
+        log.info("Object in storage was found. userDirectory={}, path={}", userDirectory, name);
 
         return info;
     }
@@ -186,7 +149,7 @@ public class MinioStorageServiceImpl implements StorageService {
     }
 
 
-    public DirectoryResponseDto createDirectory(Long id, String path) {
+    public ObjectResponseDto createDirectory(Long id, String path) {
 
         S3Valid.isBlank(path);
         S3Valid.parentIsValid(path);
@@ -219,4 +182,3 @@ public class MinioStorageServiceImpl implements StorageService {
         log.info("File deleted. userDirectory={}, path={}", userDirectory, path);
     }
 }
-

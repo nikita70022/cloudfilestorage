@@ -1,14 +1,16 @@
 package com.gigabiba.cloudfilestorage.entity;
+
 import com.gigabiba.cloudfilestorage.security.service.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @Table(name = "users", schema = "auth")
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User {
     @Id
     @Column(name = "id")

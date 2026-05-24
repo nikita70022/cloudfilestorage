@@ -2,37 +2,40 @@ package com.gigabiba.cloudfilestorage.security.config;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.gigabiba.cloudfilestorage.config.properties.FrontendProperties;
 import com.gigabiba.cloudfilestorage.repository.UserRepository;
-import com.gigabiba.cloudfilestorage.security.handler.RestAuthenticatedEntryPoint;
 import com.gigabiba.cloudfilestorage.security.authentication.JsonAuthFilter;
 import com.gigabiba.cloudfilestorage.security.handler.JsonAuthSuccessHandler;
+import com.gigabiba.cloudfilestorage.security.handler.RestAuthenticatedEntryPoint;
 import com.gigabiba.cloudfilestorage.security.service.UserDetailsServiceImpl;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.authentication.configuration.*;
-import org.springframework.security.config.annotation.method.configuration.*;
-import org.springframework.security.config.annotation.web.builders.*;
-import org.springframework.security.config.annotation.web.configuration.*;
-import org.springframework.security.config.annotation.web.configurers.*;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.*;
-import org.springframework.security.crypto.bcrypt.*;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.context.*;
+import org.springframework.security.web.context.DelegatingSecurityContextRepository;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.*;
+import java.util.List;
 
 import static org.springframework.http.HttpMethod.OPTIONS;
 
@@ -92,8 +95,8 @@ public class SecurityConfig {
     @Bean //for autologin
     public SecurityContextRepository securityContextRepository() {
         return new DelegatingSecurityContextRepository(
-                  new RequestAttributeSecurityContextRepository(),
-                  new HttpSessionSecurityContextRepository()
+                new RequestAttributeSecurityContextRepository(),
+                new HttpSessionSecurityContextRepository()
         );
     }
 

@@ -1,21 +1,19 @@
-package com.gigabiba.cloudfilestorage.storage.minio.client;
+package com.gigabiba.cloudfilestorage.storage.minio.impl;
 
 import com.gigabiba.cloudfilestorage.exception.storage.ResourceExistsException;
 import com.gigabiba.cloudfilestorage.exception.storage.StorageException;
 import com.gigabiba.cloudfilestorage.storage.minio.properties.MinioProperties;
 import com.gigabiba.cloudfilestorage.storage.service.UserDirectoryService;
-import io.minio.*;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
+import io.minio.StatObjectArgs;
 import io.minio.errors.ErrorResponseException;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.*;
+import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 
 @Service
-@Setter
-@Getter
 @Slf4j
 public class MinioUserDirectoryServiceImpl implements UserDirectoryService {
 
@@ -62,7 +60,7 @@ public class MinioUserDirectoryServiceImpl implements UserDirectoryService {
             return true;
 
         } catch (ErrorResponseException e) {
-            if ("NoSuchKey".equals(e.errorResponse().code())  || "NoSuchObject".equals(e.errorResponse().code())) {
+            if ("NoSuchKey".equals(e.errorResponse().code()) || "NoSuchObject".equals(e.errorResponse().code())) {
                 return false;
             }
             log.error("MinIO error while checking directory of user. userDirectory={}", userDirectoryName, e);

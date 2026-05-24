@@ -1,11 +1,12 @@
 package com.gigabiba.cloudfilestorage.security.service;
 
 import com.gigabiba.cloudfilestorage.entity.User;
-import org.springframework.security.core.*;
-import org.springframework.security.core.authority.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.io.Serial;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 
 public class UserDetailsImpl implements org.springframework.security.core.userdetails.UserDetails {
     @Serial
@@ -27,8 +28,19 @@ public class UserDetailsImpl implements org.springframework.security.core.userde
         return this.id;
     }
 
-    @Override public Collection<? extends GrantedAuthority> getAuthorities() {return this.authorities;}
-    @Override public String getPassword() {return this.password;}
-    @Override public String getUsername() {return this.username;}
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return this.authorities;
+    }
+
+    @Override
+    public String getPassword() {
+        return this.password;
+    }
+
+    @Override
+    public String getUsername() {
+        return this.username;
+    }
 
 }

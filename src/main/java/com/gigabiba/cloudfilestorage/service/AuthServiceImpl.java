@@ -6,6 +6,7 @@ import com.gigabiba.cloudfilestorage.dto.UserResponseDto;
 import com.gigabiba.cloudfilestorage.mapper.UserMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -14,27 +15,17 @@ import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthServiceImpl implements AuthService{
+@RequiredArgsConstructor
+public class AuthServiceImpl implements AuthService {
 
     private final UserMapper userMapper;
     private final UserService userServiceImpl;
     private final AuthenticationManager manager;
     private final SecurityContextRepository securityContextRepository;
 
-    public AuthServiceImpl(UserMapper userMapper,
-                           UserServiceImpl userServiceImpl,
-                           AuthenticationManager manager,
-                           SecurityContextRepository securityContextRepository) {
-        this.userMapper = userMapper;
-        this.userServiceImpl = userServiceImpl;
-        this.manager = manager;
-        this.securityContextRepository = securityContextRepository;
-    }
-
     public UserResponseDto registration(UserRequestDto userRequestDto) {
 
-        UserDto userDto = userMapper.toUserDtoFromRequest(userRequestDto);
-        UserDto savedUserDto = userServiceImpl.create(userDto);
+        UserDto savedUserDto = userServiceImpl.create(userRequestDto.username(), userRequestDto.password());
         return userMapper.toUserResponseDtoFromUserDto(savedUserDto);
     }
 
@@ -43,8 +34,9 @@ public class AuthServiceImpl implements AuthService{
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(userRequestDto.username(), userRequestDto.password());
         Authentication authentication = manager.authenticate(authToken);
-        var securityContext = SecurityContextHolder.getContext();
+        var securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
         securityContextRepository.saveContext(securityContext, request, response);
     }
 }

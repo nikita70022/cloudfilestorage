@@ -1,4 +1,4 @@
-package com.gigabiba.cloudfilestorage.openapi;
+package com.gigabiba.cloudfilestorage.controller.api;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,7 +12,7 @@ import org.springframework.security.core.Authentication;
 import java.util.Map;
 
 @Tag(name = "user controller", description = "management of the user controller")
-public interface UserApiDoc {
+public interface UserApi {
 
     @Operation(summary = "authorization verification", description = "checking session")
     @ApiResponse(responseCode = "200", description = "returns username of user",

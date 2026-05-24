@@ -1,26 +1,27 @@
-package com.gigabiba.cloudfilestorage.storage.minio.client;
+package com.gigabiba.cloudfilestorage.storage.minio.impl;
 
 import com.gigabiba.cloudfilestorage.exception.storage.ResourceExistsException;
 import com.gigabiba.cloudfilestorage.exception.storage.ResourceNotExistsException;
-import com.gigabiba.cloudfilestorage.storage.minio.properties.MinioProperties;
-import com.gigabiba.cloudfilestorage.storage.model.Type;
-import com.gigabiba.cloudfilestorage.storage.util.path.PathUtil;
-import com.gigabiba.cloudfilestorage.storage.model.DirectoryResponseDto;
-import com.gigabiba.cloudfilestorage.storage.model.FileResponseDto;
-import com.gigabiba.cloudfilestorage.storage.model.ObjectResponseDto;
 import com.gigabiba.cloudfilestorage.exception.storage.StorageException;
+import com.gigabiba.cloudfilestorage.storage.dto.ObjectResponseDto;
+import com.gigabiba.cloudfilestorage.storage.dto.Type;
+import com.gigabiba.cloudfilestorage.storage.minio.properties.MinioProperties;
+import com.gigabiba.cloudfilestorage.storage.util.path.PathUtil;
 import io.minio.*;
-import io.minio.errors.*;
-import io.minio.messages.*;
+import io.minio.errors.ErrorResponseException;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
+import io.minio.messages.Item;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.*;
+import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.*;
-import java.util.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
 
 @Service
 @Slf4j
@@ -59,7 +60,7 @@ class MinioDirectoryService {
             for (Result<Item> i : items) {
                 Item item = i.get();
 
-                if ( (!item.isDir()) && (item.size() == 0) ) {
+                if ((!item.isDir()) && (item.size() == 0)) {
                     continue;
                 }
 
@@ -99,7 +100,7 @@ class MinioDirectoryService {
                 for (Result<Item> i : items) {
                     Item item = i.get();
 
-                    if ( (!item.isDir()) && (item.size() == 0) ) {
+                    if ((!item.isDir()) && (item.size() == 0)) {
                         continue;
                     }
 
@@ -137,7 +138,7 @@ class MinioDirectoryService {
     }
 
 
-    protected DirectoryResponseDto createDirectory(String userDirectory, String pathName) {
+    protected ObjectResponseDto createDirectory(String userDirectory, String pathName) {
 
         if (pathExists(userDirectory, pathName)) {
             throw new ResourceExistsException("Directory already exists: " + pathName);
@@ -159,7 +160,7 @@ class MinioDirectoryService {
             throw new StorageException("Failed to create a directory ", e);
         }
 
-        return new DirectoryResponseDto(
+        return new ObjectResponseDto(
                 PathUtil.getParentPath(pathName),
                 PathUtil.getName(pathName),
                 Type.DIRECTORY);
@@ -318,7 +319,7 @@ class MinioDirectoryService {
         }
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     protected boolean pathExists(String userDirectory, String path) {
 
@@ -337,7 +338,7 @@ class MinioDirectoryService {
 
         } catch (ErrorResponseException e) {
 
-            if ("NoSuchKey".equals(e.errorResponse().code())  || "NoSuchObject".equals(e.errorResponse().code())) {
+            if ("NoSuchKey".equals(e.errorResponse().code()) || "NoSuchObject".equals(e.errorResponse().code())) {
                 return false;
             }
             log.error("MinIO error while checking object. userDirectory={}, path={}", userDirectory, path, e);
@@ -360,13 +361,13 @@ class MinioDirectoryService {
         String objectName = PathUtil.getName(stripDirectory);
 
         if (item.isDir()) {
-            return new DirectoryResponseDto(
+            return new ObjectResponseDto(
                     parentPath,
                     objectName + "/",
                     Type.DIRECTORY);
         }
 
-        return new FileResponseDto(
+        return new ObjectResponseDto(
                 parentPath,
                 objectName,
                 item.size(),
@@ -395,7 +396,6 @@ class MinioDirectoryService {
     }
 
 
-
     private void createDir(String userDirectory, String path) {
 
         try {
@@ -414,4 +414,3 @@ class MinioDirectoryService {
         }
     }
 }
-

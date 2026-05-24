@@ -1,15 +1,10 @@
 package com.gigabiba.cloudfilestorage.dto;
 
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gigabiba.cloudfilestorage.storage.util.validation.S3BucketNameValidation;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-
 
 public record UserRequestDto(
 

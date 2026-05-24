@@ -7,5 +7,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public interface AuthService {
     UserResponseDto registration(UserRequestDto userRequestDto);
+
     void autologin(UserRequestDto userRequestDto, HttpServletRequest request, HttpServletResponse response);
 }

@@ -3,12 +3,13 @@ package com.gigabiba.cloudfilestorage.config;
 import com.redis.testcontainers.RedisContainer;
 import io.minio.MinioClient;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.test.context.*;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.*;
+import org.testcontainers.containers.MinIOContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @TestConfiguration

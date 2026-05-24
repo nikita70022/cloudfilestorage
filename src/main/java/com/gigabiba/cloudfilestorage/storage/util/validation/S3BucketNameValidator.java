@@ -1,13 +1,14 @@
 package com.gigabiba.cloudfilestorage.storage.util.validation;
 
-import jakarta.validation.*;
-import org.springframework.stereotype.*;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+import lombok.NoArgsConstructor;
 
-import java.util.regex.*;
+import java.util.regex.Pattern;
 
-@Component
+@NoArgsConstructor
 public class S3BucketNameValidator implements ConstraintValidator<S3BucketNameValidation, String> {
-    
+
     private static final Pattern BASE_PATTERN =
             Pattern.compile("^[a-z0-9]([a-z0-9-]{1,61})[a-z0-9]$");
 

@@ -30,8 +30,7 @@ public class JsonAuthFilter extends UsernamePasswordAuthenticationFilter {
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException {
 
-        if (request.getContentType() == null ||
-            !request.getContentType().contains("application/json")) {
+        if (request.getContentType() == null || !request.getContentType().contains("application/json")) {
             throw new AuthenticationServiceException("Content-Type must be application/json");
         }
         try {

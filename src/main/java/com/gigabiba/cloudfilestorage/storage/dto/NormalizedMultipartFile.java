@@ -1,6 +1,5 @@
-package com.gigabiba.cloudfilestorage.storage.model;
+package com.gigabiba.cloudfilestorage.storage.dto;
 
-import com.gigabiba.cloudfilestorage.exception.storage.ValidationException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -9,11 +8,11 @@ import java.io.InputStream;
 
 /**
  * Creates a MultipartFile wrapper that normalizes filenames coming from browsers.
- *
+ * <p>
  * Some browsers send Windows-style paths in multipart uploads
  * (e.g. "C:\folder\file.txt"). Since ':' is not allowed in our storage
  * naming scheme, the colon is replaced with '/'.
- *
+ * <p>
  * If the original filename is null or empty, an empty name is used.
  */
 public class NormalizedMultipartFile implements MultipartFile {

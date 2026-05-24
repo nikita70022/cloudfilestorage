@@ -1,35 +1,27 @@
 package com.gigabiba.cloudfilestorage.controller;
 
+import com.gigabiba.cloudfilestorage.controller.api.StorageApi;
 import com.gigabiba.cloudfilestorage.exception.storage.ValidationException;
-import com.gigabiba.cloudfilestorage.openapi.StorageApiDoc;
 import com.gigabiba.cloudfilestorage.security.service.UserDetailsImpl;
-import com.gigabiba.cloudfilestorage.storage.minio.client.MinioStorageServiceImpl;
-import com.gigabiba.cloudfilestorage.storage.model.DirectoryResponseDto;
-import com.gigabiba.cloudfilestorage.storage.model.ObjectResponseDto;
-
+import com.gigabiba.cloudfilestorage.storage.dto.ObjectResponseDto;
 import com.gigabiba.cloudfilestorage.storage.service.StorageService;
-import org.springframework.http.*;
-import org.springframework.security.core.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.security.Principal;
-import java.util.*;
+import java.util.List;
 
 
 @RestController
 @RequestMapping("/api")
-public class StorageController implements StorageApiDoc {
+@RequiredArgsConstructor
+public class StorageController implements StorageApi {
 
     private final StorageService storageServiceImpl;
-
-    public StorageController(MinioStorageServiceImpl storageServiceImpl) {
-        this.storageServiceImpl = storageServiceImpl;
-    }
 
     @GetMapping(value = "/resource", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ObjectResponseDto> getFileInfo(@RequestParam(value = "path") String path,
@@ -59,7 +51,7 @@ public class StorageController implements StorageApiDoc {
 
 
     @PostMapping(value = "/resource", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-                                         produces = MediaType.APPLICATION_JSON_VALUE)
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ObjectResponseDto>> uploadObjects(@RequestParam String path,
                                                                  @RequestParam(name = "object") List<MultipartFile> files,
                                                                  @AuthenticationPrincipal UserDetailsImpl user) {
@@ -116,11 +108,11 @@ public class StorageController implements StorageApiDoc {
 
 
     @PostMapping(value = "/directory", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<DirectoryResponseDto> createDirectory(@RequestParam String path,
+    public ResponseEntity<ObjectResponseDto> createDirectory(@RequestParam String path,
                                                                 @AuthenticationPrincipal UserDetailsImpl user)
             throws ValidationException {
 
-        DirectoryResponseDto dirInfo = storageServiceImpl.createDirectory(user.getId(), path);
+        ObjectResponseDto dirInfo = storageServiceImpl.createDirectory(user.getId(), path);
 
         return ResponseEntity
                 .status(201)
@@ -137,8 +129,7 @@ public class StorageController implements StorageApiDoc {
         storageServiceImpl.deleteObject(user.getId(), path);
 
         return ResponseEntity
-                .status(204)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .noContent()
                 .build();
     }
 }

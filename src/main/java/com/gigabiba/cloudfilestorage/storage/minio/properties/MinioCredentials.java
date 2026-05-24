@@ -9,4 +9,5 @@ import org.springframework.validation.annotation.Validated;
 public record MinioCredentials(
         @NotBlank String accessKey,
         @NotBlank String secretKey
-) {}
+) {
+}

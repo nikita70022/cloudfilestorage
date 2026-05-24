@@ -1,4 +1,4 @@
-package com.gigabiba.cloudfilestorage.storage.model;
+package com.gigabiba.cloudfilestorage.storage.dto;
 
 public enum Type {
     FILE,

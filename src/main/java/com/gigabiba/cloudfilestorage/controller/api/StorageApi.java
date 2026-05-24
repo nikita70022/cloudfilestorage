@@ -1,8 +1,7 @@
-package com.gigabiba.cloudfilestorage.openapi;
+package com.gigabiba.cloudfilestorage.controller.api;
 
 import com.gigabiba.cloudfilestorage.security.service.UserDetailsImpl;
-import com.gigabiba.cloudfilestorage.storage.model.DirectoryResponseDto;
-import com.gigabiba.cloudfilestorage.storage.model.ObjectResponseDto;
+import com.gigabiba.cloudfilestorage.storage.dto.ObjectResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -11,7 +10,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,7 +20,7 @@ import java.util.List;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
 @Tag(name = "storage controller", description = "manage objects (files, folders) in S3 storage")
-public interface StorageApiDoc {
+public interface StorageApi {
 
 
     @Operation(summary = "info about file", description = "getting information about file")
@@ -61,7 +59,7 @@ public interface StorageApiDoc {
             "and create path to the file through the /, max size of object 2048MB")
     @ApiResponse(responseCode = "201", description = "files have been successfully downloaded",
             content = @Content(mediaType = "application/json",
-            array = @ArraySchema(schema = @Schema(implementation = ObjectResponseDto.class))))
+                    array = @ArraySchema(schema = @Schema(implementation = ObjectResponseDto.class))))
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             content = @Content(
                     mediaType = MULTIPART_FORM_DATA_VALUE,
@@ -115,7 +113,7 @@ public interface StorageApiDoc {
     @Operation(summary = "get directory info", description = "returns the list of all files and subfolders along the specified user path")
     @ApiResponse(responseCode = "200", description = "the list of resources has been successfully received",
             content = @Content(mediaType = "application/json",
-            array = @ArraySchema(schema = @Schema(implementation = ObjectResponseDto.class))))
+                    array = @ArraySchema(schema = @Schema(implementation = ObjectResponseDto.class))))
     @ApiResponse(responseCode = "400", description = "invalid body or not exist path")
     @ApiResponse(responseCode = "401", description = "unauthorized user")
     @ApiResponse(responseCode = "500", description = "unknown error")
@@ -129,11 +127,11 @@ public interface StorageApiDoc {
     @Operation(summary = "create empty directory", description = "creates a new directory on the path")
     @ApiResponse(responseCode = "201", description = "folder has been successfully created",
             content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = ObjectResponseDto.class)))
+                    schema = @Schema(implementation = ObjectResponseDto.class)))
     @ApiResponse(responseCode = "400", description = "invalid body or not exist path")
     @ApiResponse(responseCode = "401", description = "unauthorized user")
     @ApiResponse(responseCode = "500", description = "unknown error")
-    ResponseEntity<DirectoryResponseDto> createDirectory(
+    ResponseEntity<ObjectResponseDto> createDirectory(
             @Parameter(description = "path to new directory(for example, 'documents/family')", example = "photos/")
             @RequestParam String path,
             @Parameter(hidden = true)
@@ -143,7 +141,7 @@ public interface StorageApiDoc {
     @Operation(summary = "delete resource", description = "removal file or directory from storage")
     @ApiResponse(responseCode = "204", description = "no content",
             content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = ObjectResponseDto.class)))
+                    schema = @Schema(implementation = ObjectResponseDto.class)))
     @ApiResponse(responseCode = "400", description = "invalid or missing path")
     @ApiResponse(responseCode = "401", description = "unauthorized user")
     @ApiResponse(responseCode = "404", description = "resource not found")
@@ -154,4 +152,3 @@ public interface StorageApiDoc {
             @Parameter(hidden = true)
             @AuthenticationPrincipal UserDetailsImpl user);
 }
-

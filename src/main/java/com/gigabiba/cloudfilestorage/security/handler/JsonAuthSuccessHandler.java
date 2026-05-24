@@ -1,9 +1,9 @@
 package com.gigabiba.cloudfilestorage.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,15 +15,11 @@ import java.io.IOException;
 import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class JsonAuthSuccessHandler implements AuthenticationSuccessHandler {
 
     private final SecurityContextRepository repo;
     private final ObjectMapper objectMapper;
-
-    public JsonAuthSuccessHandler(ObjectMapper objectMapper, SecurityContextRepository securityContextRepository) {
-        this.objectMapper = objectMapper;
-        this.repo = securityContextRepository;
-    }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,

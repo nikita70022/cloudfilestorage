@@ -1,22 +1,23 @@
-package com.gigabiba.cloudfilestorage.storage.minio.client;
+package com.gigabiba.cloudfilestorage.storage.minio.impl;
 
-import com.gigabiba.cloudfilestorage.storage.minio.properties.MinioProperties;
-import com.gigabiba.cloudfilestorage.storage.model.NormalizedMultipartFile;
 import com.gigabiba.cloudfilestorage.exception.storage.ResourceExistsException;
-import com.gigabiba.cloudfilestorage.storage.util.path.PathUtil;
-import com.gigabiba.cloudfilestorage.storage.model.FileResponseDto;
-import com.gigabiba.cloudfilestorage.storage.model.ObjectResponseDto;
-import com.gigabiba.cloudfilestorage.storage.model.Type;
 import com.gigabiba.cloudfilestorage.exception.storage.ResourceNotExistsException;
 import com.gigabiba.cloudfilestorage.exception.storage.StorageException;
+import com.gigabiba.cloudfilestorage.storage.dto.ObjectResponseDto;
+import com.gigabiba.cloudfilestorage.storage.dto.Type;
+import com.gigabiba.cloudfilestorage.storage.minio.properties.MinioProperties;
+import com.gigabiba.cloudfilestorage.storage.util.path.PathUtil;
 import io.minio.*;
-import io.minio.errors.*;
+import io.minio.errors.ErrorResponseException;
+import io.minio.messages.Item;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.*;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.*;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -60,7 +61,7 @@ class MinioFileService {
                             .build()
             );
 
-            return new FileResponseDto(
+            return new ObjectResponseDto(
                     PathUtil.getParentPath(pathName),
                     PathUtil.getName(pathName),
                     stat.size(),
@@ -73,6 +74,54 @@ class MinioFileService {
                     userDirectory, pathName, e);
             throw new StorageException("Failed to get file info", e);
         }
+    }
+
+
+    public List<ObjectResponseDto> searchObjects(String userDirectory, String name) {
+
+        Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                        .bucket(bucketName)
+                        .prefix(userDirectory + "/")
+                        .recursive(true)
+                        .build()
+        );
+
+        List<ObjectResponseDto> matchObjects = new ArrayList<>();
+
+        try {
+            for (Result<Item> result : results) {
+                Item item = result.get();
+
+                String itemName = item.objectName();
+                if (!itemName.toLowerCase().contains(name.toLowerCase())) {
+                    continue;
+                }
+
+                if (MinioDirectoryService.isDirectory(itemName)) {
+                    matchObjects.add(new ObjectResponseDto(
+                            PathUtil.getParentPath(PathUtil.stripUserDirectory(userDirectory, itemName)),
+                            PathUtil.getName(PathUtil.stripUserDirectory(userDirectory, itemName)),
+                            Type.DIRECTORY));
+                    continue;
+                }
+
+                String stripped = PathUtil.stripUserDirectory(userDirectory + "/", itemName);
+                matchObjects.add(new ObjectResponseDto(
+                        PathUtil.getParentPath(stripped),
+                        PathUtil.getName(itemName),
+                        item.size(),
+                        Type.FILE));
+            }
+
+        } catch (Exception e) {
+
+            log.error("Unexpected error while getting info about file. userDirectory={}, pathName={}",
+                    userDirectory, name, e);
+            throw new StorageException("Failed to search objects", e);
+        }
+
+        return matchObjects;
     }
 
 
@@ -112,7 +161,7 @@ class MinioFileService {
     protected StreamingResponseBody getFile(String userDirectory, String pathName) {
 
         if (!fileExists(userDirectory, pathName)) {
-            throw new ResourceNotExistsException("File already exists: " + pathName);
+            throw new ResourceNotExistsException("File not exists: " + pathName);
         }
 
         try {
@@ -152,7 +201,7 @@ class MinioFileService {
             throw new IllegalArgumentException("Cannot delete directory as file");
         }
         if (!fileExists(userDirectory, pathName)) {
-            throw new ResourceNotExistsException("File already exists: " + pathName);
+            throw new ResourceNotExistsException("File not exists: " + pathName);
         }
 
         try {
@@ -228,7 +277,7 @@ class MinioFileService {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private boolean fileExists(String userDirectory, String path) {
 
@@ -236,7 +285,7 @@ class MinioFileService {
             minioClient.statObject(
                     StatObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(userDirectory + "/"  + path)
+                            .object(userDirectory + "/" + path)
                             .build()
             );
 
@@ -244,7 +293,7 @@ class MinioFileService {
 
         } catch (ErrorResponseException e) {
 
-            if ("NoSuchKey".equals(e.errorResponse().code())  || "NoSuchObject".equals(e.errorResponse().code())) {
+            if ("NoSuchKey".equals(e.errorResponse().code()) || "NoSuchObject".equals(e.errorResponse().code())) {
                 return false;
             }
 

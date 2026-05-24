@@ -1,4 +1,4 @@
-package com.gigabiba.cloudfilestorage.openapi;
+package com.gigabiba.cloudfilestorage.controller.api;
 
 import com.gigabiba.cloudfilestorage.dto.UserRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.Map;
 
 @Tag(name = "authentication controller", description = "management of the authentication controller")
-public interface AuthApiDoc {
+public interface AuthApi {
 
     @Operation(summary = "registration of a new user", description = "creates a new user in the system. the login should be unique")
     @ApiResponse(responseCode = "201", description = "the user has been successfully created and returns username of user",
@@ -26,8 +26,8 @@ public interface AuthApiDoc {
     @ApiResponse(responseCode = "409", description = "the user with this login already exists")
     @ApiResponse(responseCode = "500", description = "unknown error")
     ResponseEntity<Map<String, String>> registration(@RequestBody @Valid UserRequestDto userRequestDto,
-                                                            HttpServletRequest request,
-                                                            HttpServletResponse response);
+                                                     HttpServletRequest request,
+                                                     HttpServletResponse response);
 
     @Operation(summary = "login to the system", description = "checking credentials and create a session")
     @ApiResponse(responseCode = "200", description = "successful authorization and returns username of user",

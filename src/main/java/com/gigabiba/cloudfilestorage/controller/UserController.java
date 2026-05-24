@@ -1,6 +1,6 @@
 package com.gigabiba.cloudfilestorage.controller;
 
-import com.gigabiba.cloudfilestorage.openapi.UserApiDoc;
+import com.gigabiba.cloudfilestorage.controller.api.UserApi;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -12,7 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/api/user")
-public class UserController implements UserApiDoc {
+public class UserController implements UserApi {
 
     @GetMapping(value = "/me", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> getMe(Authentication authentication) {
